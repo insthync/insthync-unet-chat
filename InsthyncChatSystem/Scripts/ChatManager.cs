@@ -65,13 +65,13 @@ namespace Insthync.ChatSystem
 
             DontDestroyOnLoad(gameObject);
         }
-        
+
         public void SetupServerMessages()
         {
             NetworkServer.RegisterHandler(MsgChatSendFromClient.MsgId, OnServerChatReceive);
             NetworkServer.RegisterHandler(MsgChatLoginRequestFromClient.MsgId, OnServerLoginRequest);
         }
-        
+
         public void SetupClientMessages()
         {
             NetworkManager.singleton.client.RegisterHandler(MsgChatReceiveFromServer.MsgId, OnClientChatReceive);
