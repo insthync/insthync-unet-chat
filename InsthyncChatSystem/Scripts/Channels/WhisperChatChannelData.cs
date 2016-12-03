@@ -15,7 +15,7 @@ namespace Insthync.ChatSystem
             {
                 string targetId = chatData[0];
                 string message = chatData[1];
-                foreach (ChatUser chatUser in ChatManager.singleton.ChatUsers.Values)
+                foreach (ChatUser chatUser in ChatManager.Singleton.ChatUsers.Values)
                 {
                     if (chatUser.userId.Equals(targetId))
                         return new ChatChannelDataResult(this, message, false, senderUser, chatUser);

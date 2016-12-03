@@ -51,17 +51,18 @@ namespace Insthync.ChatSystem
                 return chatUsers;
             }
         }
-        public static ChatManager singleton { get; private set; }
+        public static ChatManager Singleton { get; private set; }
+        public NetworkConnection clientConnection;
         private ChatUser clientChatUser;
 
         void Awake()
         {
-            if (singleton != null)
+            if (Singleton != null)
             {
                 Destroy(gameObject);
                 return;
             }
-            singleton = this;
+            Singleton = this;
 
             DontDestroyOnLoad(gameObject);
         }
@@ -72,10 +73,10 @@ namespace Insthync.ChatSystem
             NetworkServer.RegisterHandler(MsgChatLoginRequestFromClient.MsgId, OnServerLoginRequest);
         }
 
-        public void SetupClientMessages()
+        public void SetupClientMessages(NetworkClient client)
         {
-            NetworkManager.singleton.client.RegisterHandler(MsgChatReceiveFromServer.MsgId, OnClientChatReceive);
-            NetworkManager.singleton.client.RegisterHandler(MsgChatLoginSuccessFromServer.MsgId, OnClientLoginSuccess);
+            client.RegisterHandler(MsgChatReceiveFromServer.MsgId, OnClientChatReceive);
+            client.RegisterHandler(MsgChatLoginSuccessFromServer.MsgId, OnClientLoginSuccess);
         }
 
         public void AddChatUser(NetworkConnection conn, string userId, string name)
@@ -108,7 +109,7 @@ namespace Insthync.ChatSystem
 
         public void SetClientChatUser(string userId, string name)
         {
-            SetClientChatUser(new ChatUser(NetworkManager.singleton.client.connection, userId, name));
+            SetClientChatUser(new ChatUser(clientConnection, userId, name));
         }
 
         public void SetClientChatUser(ChatUser user)
@@ -157,7 +158,7 @@ namespace Insthync.ChatSystem
                 string[] chatData = channel.GetChatData(message);
                 if (chatData != null && chatData.Length > 0)
                 {
-                    NetworkConnection conn = NetworkManager.singleton.client.connection;
+                    NetworkConnection conn = clientConnection;
                     MsgChatSendFromClient chatSendMsg = new MsgChatSendFromClient();
                     chatSendMsg.channelId = channelId;
                     chatSendMsg.chatData = chatData;
@@ -170,7 +171,7 @@ namespace Insthync.ChatSystem
                 Debug.LogWarning("[Warning] Chat channel (" + channelId + ") not found");
         }
 
-        private void OnServerChatReceive(NetworkMessage netMsg)
+        public void OnServerChatReceive(NetworkMessage netMsg)
         {
             MsgChatSendFromClient msg = netMsg.ReadMessage<MsgChatSendFromClient>();
             ChatChannelData channel = defaultChannel;
@@ -189,16 +190,19 @@ namespace Insthync.ChatSystem
                 Debug.LogError("[Error] Invalid chat user " + netMsg.conn.connectionId);
         }
 
-        private void OnServerLoginRequest(NetworkMessage netMsg)
+        public void OnServerLoginRequest(NetworkMessage netMsg)
         {
             MsgChatLoginRequestFromClient msg = netMsg.ReadMessage<MsgChatLoginRequestFromClient>();
+            string userId = msg.userId;
+            if (string.IsNullOrEmpty(userId))
+                userId = System.Guid.NewGuid().ToString();
             if (!string.IsNullOrEmpty(msg.name))
-                AddChatUser(netMsg.conn, System.Guid.NewGuid().ToString(), msg.name);
+                AddChatUser(netMsg.conn, userId, msg.name);
             else
                 Debug.LogWarning("[Warning] Chat user " + netMsg.conn.connectionId + " entered empty name");
         }
 
-        private void OnClientChatReceive(NetworkMessage netMsg)
+        public void OnClientChatReceive(NetworkMessage netMsg)
         {
             MsgChatReceiveFromServer msg = netMsg.ReadMessage<MsgChatReceiveFromServer>();
             ChatChannelData channel = defaultChannel;
@@ -219,7 +223,7 @@ namespace Insthync.ChatSystem
             }
         }
 
-        private void OnClientLoginSuccess(NetworkMessage netMsg)
+        public void OnClientLoginSuccess(NetworkMessage netMsg)
         {
             MsgChatLoginSuccessFromServer msg = netMsg.ReadMessage<MsgChatLoginSuccessFromServer>();
             if (!string.IsNullOrEmpty(msg.userId))
