@@ -52,7 +52,7 @@ namespace Insthync.ChatSystem
             }
         }
         public static ChatManager Singleton { get; private set; }
-        public NetworkConnection clientConnection;
+        public NetworkClient client;
         private ChatUser clientChatUser;
 
         void Awake()
@@ -109,7 +109,7 @@ namespace Insthync.ChatSystem
 
         public void SetClientChatUser(string userId, string name)
         {
-            SetClientChatUser(new ChatUser(clientConnection, userId, name));
+            SetClientChatUser(new ChatUser(client.connection, userId, name));
         }
 
         public void SetClientChatUser(ChatUser user)
@@ -158,7 +158,7 @@ namespace Insthync.ChatSystem
                 string[] chatData = channel.GetChatData(message);
                 if (chatData != null && chatData.Length > 0)
                 {
-                    NetworkConnection conn = clientConnection;
+                    NetworkConnection conn = client.connection;
                     MsgChatSendFromClient chatSendMsg = new MsgChatSendFromClient();
                     chatSendMsg.channelId = channelId;
                     chatSendMsg.chatData = chatData;
