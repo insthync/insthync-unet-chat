@@ -107,6 +107,19 @@ namespace Insthync.ChatSystem
             ChatUsers.Clear();
         }
 
+        public bool ContainsChatUserId(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+                return false;
+            var enumerator = ChatUsers.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current.Value.userId.Equals(userId))
+                    return true;
+            }
+            return false;
+        }
+
         public void SetClientChatUser(string userId, string name)
         {
             SetClientChatUser(new ChatUser(client.connection, userId, name));
@@ -194,12 +207,23 @@ namespace Insthync.ChatSystem
         {
             MsgChatLoginRequestFromClient msg = netMsg.ReadMessage<MsgChatLoginRequestFromClient>();
             string userId = msg.userId;
+
             if (string.IsNullOrEmpty(userId))
                 userId = System.Guid.NewGuid().ToString();
-            if (!string.IsNullOrEmpty(msg.name))
-                AddChatUser(netMsg.conn, userId, msg.name);
-            else
+
+            if (string.IsNullOrEmpty(msg.name))
+            {
                 Debug.LogWarning("[Warning] Chat user " + netMsg.conn.connectionId + " entered empty name");
+                return;
+            }
+
+            if (ContainsChatUserId(userId))
+            {
+                Debug.LogWarning("[Warning] Chat user " + netMsg.conn.connectionId + " user id " + userId + " already exists");
+                return;
+            }
+
+            AddChatUser(netMsg.conn, userId, msg.name);
         }
 
         public void OnClientChatReceive(NetworkMessage netMsg)
