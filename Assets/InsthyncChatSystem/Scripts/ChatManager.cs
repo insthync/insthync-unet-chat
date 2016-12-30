@@ -138,7 +138,10 @@ namespace Insthync.ChatSystem
         public void ClientChatReceive(ChatChannelDataResult result)
         {
             if (result == null)
+            {
+                Debug.LogWarning("[Warning] Can not receive null chat result");
                 return;
+            }
 
             MsgChatReceiveFromServer msg = new MsgChatReceiveFromServer();
             msg.channelId = result.channel.channelId;
@@ -163,7 +166,10 @@ namespace Insthync.ChatSystem
         public void ClientChatSend(string channelId, string message)
         {
             if (clientChatUser == null || string.IsNullOrEmpty(message))
+            {
+                Debug.LogWarning("[Warning] Did not login to server can not send chat message");
                 return;
+            }
 
             ChatChannelData channel = null;
             if (Channels.TryGetValue(channelId, out channel))
